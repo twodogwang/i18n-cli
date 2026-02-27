@@ -1,17 +1,17 @@
 {
-  "name": "@ifreeovo/translate-utils",
-  "version": "1.2.0",
+  "name": "@bakarhythm/translate-utils",
+  "version": "1.0.0",
   "description": "翻译工具函数，支持有道，谷歌，百度，阿里机器翻译",
   "publishConfig": {
     "access": "public"
   },
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.js",
-  "types": "index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "dev:cjs": "tsc --watch -p ./tsconfig.cjs.json",
-    "dev:esm": "tsc --watch -p ./tsconfig.esm.json",
-    "build": "rimraf dist && tsc --build ./tsconfig.cjs.json && tsc --build ./tsconfig.esm.json"
+    "dev:cjs": "unbuild --stub",
+    "dev:esm": "unbuild --stub",
+    "build": "unbuild"
   },
   "keywords": [
     "translate"

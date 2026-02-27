@@ -92,7 +92,7 @@ importers:
         specifier: ^3.5.35
         version: 3.5.43(react-router@5.3.4(react@17.0.2))
     devDependencies:
-      '@ifreeovo/i18n-extract-cli':
+      '@bakarhythm/i18n-extract-cli':
         specifier: workspace:*
         version: link:../../packages/i18n-extract-cli
       '@types/react':
@@ -129,7 +129,7 @@ importers:
         specifier: ^9.3.0-beta.10
         version: 9.14.5(vue@3.5.27(typescript@4.9.5))
     devDependencies:
-      '@ifreeovo/i18n-extract-cli':
+      '@bakarhythm/i18n-extract-cli':
         specifier: workspace:*
         version: link:../../packages/i18n-extract-cli
       '@vitejs/plugin-vue':
@@ -174,9 +174,9 @@ importers:
       '@babel/types':
         specifier: ^7.20.0
         version: 7.29.0
-      '@ifreeovo/translate-utils':
-        specifier: ^1.2.0
-        version: 1.2.0
+      '@bakarhythm/translate-utils':
+        specifier: workspace:*
+        version: link:../translate-utils
       '@vue/compiler-sfc':
         specifier: ^3.2.39
         version: 3.5.27
@@ -1598,9 +1598,6 @@ packages:
   '@humanwhocodes/object-schema@2.0.3':
     resolution: {integrity: sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA==}
     deprecated: Use @eslint/object-schema instead
-
-  '@ifreeovo/translate-utils@1.2.0':
-    resolution: {integrity: sha512-VeiHVcUNKyOnLyhZyrXIYDkDoxfCf5iYTykMwVQhFWU3iLsPwSHfe9Q+EHxM1K6LDutkN/0Tfr7yoyb+lQV+kA==}
 
   '@inquirer/external-editor@1.0.3':
     resolution: {integrity: sha512-RWbSrDiYmO4LbejWY7ttpxczuwQyZLBUyygsA9Nsv95hpzUWwnNTVQmAq3xuh7vNwCp07UTmE5i11XAEExx4RA==}
@@ -9591,20 +9588,6 @@ snapshots:
   '@humanwhocodes/module-importer@1.0.1': {}
 
   '@humanwhocodes/object-schema@2.0.3': {}
-
-  '@ifreeovo/translate-utils@1.2.0':
-    dependencies:
-      '@alicloud/alimt20181012': 1.4.2
-      '@alicloud/openapi-client': 0.4.15
-      '@alicloud/tea-util': 1.4.11
-      '@vitalets/google-translate-api': 9.0.0(encoding@0.1.13)
-      got: 11.8.5
-      md5: 2.3.0
-      proxy-agent: 5.0.0
-      qs: 6.14.1
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
 
   '@inquirer/external-editor@1.0.3(@types/node@18.19.130)':
     dependencies:
