@@ -6,13 +6,18 @@
     "access": "public"
   },
   "bin": {
-    "it": "bin/index.js"
+    "it": "bin/index.js",
+    "i18n-extract": "bin/index.js"
   },
   "types": "types/index.d.ts",
   "scripts": {
-    "dev": "tsc --watch",
-    "build": "rimraf dist && tsc --build",
-    "check": "tsc --noEmit"
+    "dev": "unbuild --stub",
+    "build": "unbuild",
+    "check": "tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "coverage": "vitest run --coverage"
   },
   "keywords": [
     "i18n",
