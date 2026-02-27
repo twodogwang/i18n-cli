@@ -26,7 +26,7 @@
 ## 安装
 
 ```
-npm i @ifreeovo/i18n-extract-cli -g
+npm i @bakarhythm/i18n-extract-cli -g
 ```
 
 ## 使用
