@@ -1,5 +1,16 @@
 # @ifreeovo/i18n-extract-cli
 
+## 2.0.0
+
+### Major Changes
+
+- 首次发布 @bakarhythm 作用域版本
+
+### Patch Changes
+
+- Updated dependencies
+  - @bakarhythm/translate-utils@2.0.0
+
 ## 4.3.1
 
 ### Patch Changes

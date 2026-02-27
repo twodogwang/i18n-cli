@@ -13,6 +13,7 @@ export interface transformOptions {
   rule: Rule
   parse: (code: string) => ParseResult
   isJsInVue?: boolean
+  isVueSetup?: boolean
   filePath?: string
 }
 
@@ -31,6 +32,13 @@ export interface Rule {
   forceImport?: boolean
   functionNameInTemplate?: string
   functionNameInScript?: string
+  // Vue setup 和 Options API 区分配置
+  functionNameInSetup?: string // setup 语法中的函数名，如 't'
+  functionNameInOptionsAPI?: string // Options API 中的函数名，如 '$t'
+  callerInSetup?: string // setup 语法中的调用者，通常为空
+  callerInOptionsAPI?: string // Options API 中的调用者，如 'this'
+  importDeclarationForSetup?: string // setup 语法的 import 语句
+  functionSnippetsForSetup?: string // setup 语法的函数声明
 }
 
 export type Rules = {
@@ -105,11 +113,14 @@ export type Config = {
   prettier: PrettierConfig
   skipExtract: boolean
   skipTranslate: boolean
+  translateFromExcel: boolean
+  backfillExcel: boolean
   translationTextMaxLength: number
   incremental: boolean
   globalRule: GlobalRule
   excelPath: string
   exportExcel: boolean
+  mergeLocales: boolean
   adjustKeyMap?: AdjustKeyMap
 } & TranslateConfig
 
@@ -122,6 +133,8 @@ export interface CommandOptions {
   verbose?: boolean
   skipExtract?: boolean
   skipTranslate?: boolean
+  translateFromExcel?: boolean
+  backfillExcel?: boolean
   excelPath?: string
   exportExcel?: boolean
 }

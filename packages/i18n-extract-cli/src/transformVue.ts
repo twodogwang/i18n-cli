@@ -19,7 +19,13 @@ import { IGNORE_REMARK } from './utils/constants'
 import StateManager from './utils/stateManager'
 import errorLogger from './utils/error-logger'
 
-type Handler = (source: string, rule: Rule) => string
+type TemplateHandler = (source: string, rule: Rule) => string
+type ScriptHandler = (
+  source: string,
+  rule: Rule,
+  isSetup?: boolean,
+  forceImport?: boolean
+) => string
 
 const COMMENT_TYPE = '!'
 
@@ -149,11 +155,8 @@ function handleTemplate(code: string, rule: Rule): string {
           attrs += ` ${key}="${source}" `
         }
       } else if (includeChinese(attrValue) && !isVueDirective) {
-        const translationKey = Collector.add(attrValue, (key, path) => {
-          // 属性里的$t('')转成$t(``)，并把双引号转成单引号
-          key = key.replace(/'/g, '`').replace(/"/g, "'")
-          return customizeKey(key, path)
-        })
+        // 普通属性中的中文，直接使用原始的 customizeKey
+        const translationKey = Collector.add(attrValue, customizeKey)
         const expression = getReplaceValue(translationKey)
         attrs += ` :${key}="${expression}" `
       } else if (attrValue === '') {
@@ -284,31 +287,63 @@ function handleTemplate(code: string, rule: Rule): string {
   return htmlString
 }
 
-function getComponentDecoratorPosition(source: string): number {
-  return source.indexOf('@Component')
-}
-
 function getExportDefaultPosition(source: string): number {
   return source.indexOf('export default')
 }
 
-function handleScript(source: string, rule: Rule): string {
-  const lang = StateManager.getVueScriptLang().toLowerCase()
-  if (['ts', 'typescript', 'tsx'].includes(lang)) {
-    // 如果vue用了ts，按@Component装饰器进行分割
-    const startIndex = getComponentDecoratorPosition(source)
-    return combineVueScript(source.slice(0, startIndex), source.slice(startIndex), rule)
-  } else {
-    const startIndex = getExportDefaultPosition(source)
-    return combineVueScript(source.slice(0, startIndex), source.slice(startIndex), rule)
+function handleScript(
+  source: string,
+  rule: Rule,
+  isSetup?: boolean,
+  forceImport?: boolean
+): string {
+  // setup 语法：直接处理，不需要分割
+  if (isSetup) {
+    return handleSetupScript(source, rule, forceImport || false)
   }
+
+  // 非 setup 语法（Options API）：按 export default 分割
+  const startIndex = getExportDefaultPosition(source)
+  return combineVueScript(source.slice(0, startIndex), source.slice(startIndex), rule)
 }
 
-function combineVueScript(nonComponentCode: string, componentCode: string, rule: Rule) {
+function handleSetupScript(source: string, rule: Rule, forceImport: boolean): string {
+  // 优先使用 setup 专用配置，如果没有则回退到通用配置
+  const functionName = rule.functionNameInSetup || rule.functionNameInScript
+  const caller = rule.callerInSetup !== undefined ? rule.callerInSetup : ''
+  const importDeclaration = rule.importDeclarationForSetup || rule.importDeclaration
+  const functionSnippets = rule.functionSnippetsForSetup || rule.functionSnippets
+
   const transformOptions = {
     rule: {
       ...rule,
-      functionName: rule.functionNameInScript,
+      functionName,
+      caller,
+      importDeclaration,
+      functionSnippets,
+      forceImport, // 强制导入，即使 script 本身没有中文
+    },
+    isJsInVue: true,
+    isVueSetup: true, // 标记是 Vue setup 语法
+    parse: initParse(),
+  }
+
+  const scriptContext = {}
+
+  const result = transformJs(source, transformOptions, scriptContext)
+  return '\n' + result.code + '\n'
+}
+
+function combineVueScript(nonComponentCode: string, componentCode: string, rule: Rule) {
+  // 优先使用 Options API 专用配置，如果没有则回退到通用配置
+  const functionName = rule.functionNameInOptionsAPI || rule.functionNameInScript
+  const caller = rule.callerInOptionsAPI !== undefined ? rule.callerInOptionsAPI : rule.caller
+
+  const transformOptions = {
+    rule: {
+      ...rule,
+      functionName,
+      caller,
     },
     isJsInVue: true, // 标记处理vue里的js
     parse: initParse(),
@@ -381,15 +416,35 @@ function getWrapperTemplate(sfcBlock: SFCTemplateBlock | SFCScriptBlock | SFCSty
   return template
 }
 
-function generateSource(
-  sfcBlock: SFCTemplateBlock | SFCScriptBlock,
-  handler: Handler,
+function generateTemplateSource(
+  sfcBlock: SFCTemplateBlock,
+  handler: TemplateHandler,
   rule: Rule
 ): string {
   const wrapperTemplate = getWrapperTemplate(sfcBlock)
   let source
   try {
     source = handler(sfcBlock.content, rule)
+  } catch (err: any) {
+    source = sfcBlock.content
+    errorLogger.reportTemplateError(sfcBlock.content, err)
+  }
+  return ejs.render(wrapperTemplate, {
+    code: source,
+  })
+}
+
+function generateScriptSource(
+  sfcBlock: SFCScriptBlock,
+  handler: ScriptHandler,
+  rule: Rule,
+  isSetup?: boolean,
+  forceImport?: boolean
+): string {
+  const wrapperTemplate = getWrapperTemplate(sfcBlock)
+  let source
+  try {
+    source = handler(sfcBlock.content, rule, isSetup || false, forceImport || false)
   } catch (err: any) {
     source = sfcBlock.content
     errorLogger.reportFileError(err.message)
@@ -447,18 +502,24 @@ function transformVue(
 
   const fileComment = getFileComment(descriptor)
 
+  // 记录 template 转换前的 Collector 大小
+  const collectorSizeBeforeTemplate = Collector.getSize()
+
   if (template) {
-    templateCode = generateSource(template, handleTemplate, rule)
+    templateCode = generateTemplateSource(template, handleTemplate, rule)
   }
+
+  // 检测 template 是否有中文转换
+  const templateHasTransformed = Collector.getSize() > collectorSizeBeforeTemplate
 
   if (script) {
     StateManager.setVueScriptLang(script.lang)
-    scriptCode = generateSource(script, handleScript, rule)
+    scriptCode = generateScriptSource(script, handleScript, rule, false, templateHasTransformed)
   }
 
   if (scriptSetup) {
     StateManager.setVueScriptLang(scriptSetup?.lang)
-    scriptCode = generateSource(scriptSetup, handleScript, rule)
+    scriptCode = generateScriptSource(scriptSetup, handleScript, rule, true, templateHasTransformed)
   }
 
   if (styles) {

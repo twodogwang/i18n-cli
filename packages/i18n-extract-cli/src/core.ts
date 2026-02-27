@@ -14,6 +14,7 @@ import log from './utils/log'
 import { getAbsolutePath } from './utils/getAbsolutePath'
 import Collector from './collector'
 import translate from './translate'
+import translateFromExcel from './translateFromExcel'
 import getLang from './utils/getLang'
 import { YOUDAO, GOOGLE, BAIDU, ALICLOUD } from './utils/constants'
 import StateManager from './utils/stateManager'
@@ -23,6 +24,7 @@ import { saveLocaleFile } from './utils/saveLocaleFile'
 import { isObject } from './utils/assertType'
 import errorLogger from './utils/error-logger'
 import isDirectory from './utils/isDirectory'
+import { mergeLocaleFiles } from './utils/mergeLocaleFiles'
 
 interface InquirerResult {
   translator?: 'google' | 'youdao' | 'baidu' | 'alicloud'
@@ -267,7 +269,8 @@ function formatCode(code: string, ext: string, prettierConfig: PrettierConfig): 
 
 export default async function (options: CommandOptions) {
   let i18nConfig = getI18nConfig(options)
-  if (!i18nConfig.skipTranslate) {
+  // 只有在不跳过翻译且不使用 Excel 翻译时，才询问翻译配置
+  if (!i18nConfig.skipTranslate && !i18nConfig.translateFromExcel) {
     const translationConfig = await getTranslationConfig()
     i18nConfig = merge(i18nConfig, translationConfig)
   }
@@ -283,8 +286,11 @@ export default async function (options: CommandOptions) {
     locales,
     skipExtract,
     skipTranslate,
+    translateFromExcel: useExcelTranslation,
+    backfillExcel,
     adjustKeyMap,
     localeFileType,
+    mergeLocales,
   } = i18nConfig
   log.debug(`命令行配置信息:`, i18nConfig)
 
@@ -366,17 +372,32 @@ export default async function (options: CommandOptions) {
   errorLogger.printErrors()
   console.log('') // 空一行
   if (!skipTranslate) {
-    await translate(localePath, locales, oldPrimaryLang, {
-      translator: i18nConfig.translator,
-      google: i18nConfig.google,
-      youdao: i18nConfig.youdao,
-      baidu: i18nConfig.baidu,
-      alicloud: i18nConfig.alicloud,
-      translationTextMaxLength: i18nConfig.translationTextMaxLength,
-    })
+    if (useExcelTranslation) {
+      // 使用 Excel 翻译
+      await translateFromExcel(localePath, locales, oldPrimaryLang, {
+        excelPath: i18nConfig.excelPath,
+        backfillExcel,
+        localeFileType,
+      })
+    } else {
+      // 使用 API 翻译（现有逻辑）
+      await translate(localePath, locales, oldPrimaryLang, {
+        translator: i18nConfig.translator,
+        google: i18nConfig.google,
+        youdao: i18nConfig.youdao,
+        baidu: i18nConfig.baidu,
+        alicloud: i18nConfig.alicloud,
+        translationTextMaxLength: i18nConfig.translationTextMaxLength,
+      })
+    }
   }
 
   log.success('转换完毕!')
+
+  // 合并语言文件
+  if (mergeLocales && !skipTranslate) {
+    mergeLocaleFiles(localePath, locales, localeFileType)
+  }
 
   if (i18nConfig.exportExcel) {
     log.info(`正在导出excel翻译文件`)

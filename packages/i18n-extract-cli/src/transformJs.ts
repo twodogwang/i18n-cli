@@ -489,6 +489,30 @@ function transformJs(
   if (!context.hasImportI18n && !hasTransformed && forceImport) {
     result.code = `${importDeclaration}\n${result.code}`
   }
+
+  // Vue setup 语法：在顶层插入 functionSnippets
+  // 当 hasTransformed 或 forceImport 为 true 时都需要插入
+  if (options.isVueSetup && functionSnippets && (hasTransformed || forceImport)) {
+    // 检查代码中是否已经包含 functionSnippets
+    if (!result.code.includes(functionSnippets)) {
+      // 在 import 语句之后插入 functionSnippets
+      const lines = result.code.split('\n')
+      let insertIndex = 0
+
+      // 找到最后一个 import 语句的位置
+      for (let i = 0; i < lines.length; i++) {
+        const trimmedLine = lines[i].trim()
+        if (trimmedLine.startsWith('import ')) {
+          insertIndex = i + 1
+        }
+      }
+
+      // 在 import 之后插入空行和 functionSnippets
+      lines.splice(insertIndex, 0, '', functionSnippets)
+      result.code = lines.join('\n')
+    }
+  }
+
   return result
 }
 

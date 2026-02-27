@@ -4,7 +4,7 @@ import {
   youdaoTranslate,
   baiduTranslate,
   alicloudTranslate,
-} from '@ifreeovo/translate-utils'
+} from '@bakarhythm/translate-utils'
 import type { TranslateConfig, StringObject, translatorType } from '../types'
 import { getAbsolutePath } from './utils/getAbsolutePath'
 import log from './utils/log'

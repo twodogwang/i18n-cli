@@ -63,6 +63,10 @@ class Collector {
   getCountOfAdditions(): number {
     return this.countOfAdditions
   }
+
+  getSize(): number {
+    return Object.keys(this.keyMap).length
+  }
 }
 
 export default Collector.getInstance()

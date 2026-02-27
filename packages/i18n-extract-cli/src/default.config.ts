@@ -45,6 +45,13 @@ const config: Config = {
       customSlot: getCustomSlot,
       importDeclaration: '',
       tagOrder: ['template', 'script', 'style'],
+      // setup 和 Options API 区分配置（可选）
+      // functionNameInSetup: 't',
+      // functionNameInOptionsAPI: '$t',
+      // callerInSetup: '',
+      // callerInOptionsAPI: 'this',
+      // importDeclarationForSetup: 'import { useI18n } from "vue-i18n"',
+      // functionSnippetsForSetup: 'const { t } = useI18n()',
     },
   },
   prettier: {
@@ -58,8 +65,11 @@ const config: Config = {
   excelPath: './locales.xlsx',
   exportExcel: false,
   skipTranslate: false,
+  translateFromExcel: false,
+  backfillExcel: true,
   translationTextMaxLength: 5000,
   locales: ['en-US'],
+  mergeLocales: false,
   globalRule: {
     ignoreMethods: [],
   },

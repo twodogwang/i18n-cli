@@ -1,5 +1,11 @@
 # @ifreeovo/translate-utils
 
+## 2.0.0
+
+### Major Changes
+
+- 首次发布 @bakarhythm 作用域版本
+
 ## 1.2.0
 
 ### Minor Changes
